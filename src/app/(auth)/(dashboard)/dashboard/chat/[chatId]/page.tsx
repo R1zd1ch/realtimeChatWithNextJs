@@ -3,7 +3,6 @@
 
 import { fetchRedis } from '@/helpers/redis';
 import { handler } from '@/lib/auth';
-import { db } from '@/lib/db';
 import { messageArrayValidator } from '@/lib/validations/message';
 import { getServerSession } from 'next-auth';
 import { notFound } from 'next/navigation';
@@ -45,7 +44,8 @@ const Page = async ({ params }: any) => {
 
   const chatPartnerId = userId1 === user.id ? userId2 : userId1;
 
-  const chatPartner = (await db.get(`user:${chatPartnerId}`)) as User;
+  const chatPartnerRaw = (await fetchRedis('get', `user${chatPartnerId}`)) as string;
+  const chatPartner = JSON.parse(chatPartnerRaw) as User;
   const initialMessages = await getChatMessages(chatId);
 
   return (
