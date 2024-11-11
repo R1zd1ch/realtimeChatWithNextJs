@@ -44,8 +44,9 @@ const Page = async ({ params }: any) => {
 
   const chatPartnerId = userId1 === user.id ? userId2 : userId1;
 
-  const chatPartnerRaw = (await fetchRedis('get', `user${chatPartnerId}`)) as string;
+  const chatPartnerRaw = (await fetchRedis('get', `user:${chatPartnerId}`)) as string;
   const chatPartner = JSON.parse(chatPartnerRaw) as User;
+  console.log(chatPartnerId);
   const initialMessages = await getChatMessages(chatId);
 
   return (
@@ -58,7 +59,7 @@ const Page = async ({ params }: any) => {
                 fill
                 referrerPolicy="no-referrer"
                 src={
-                  chatPartner.image ||
+                  chatPartner?.image ||
                   'https://avatars.githubusercontent.com/u/153955933?v=4&size=64'
                 }
                 alt={`${chatPartner.name} profile picture`}
