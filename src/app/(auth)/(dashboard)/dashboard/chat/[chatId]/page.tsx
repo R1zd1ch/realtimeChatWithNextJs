@@ -1,14 +1,31 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-
+import ChatInput from '@/components/ChatInput';
+import Messages from '@/components/Messages';
 import { fetchRedis } from '@/helpers/redis';
-import { handler } from '@/lib/auth';
+import { handler as authOptions } from '@/lib/auth';
 import { messageArrayValidator } from '@/lib/validations/message';
 import { getServerSession } from 'next-auth';
-import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import Messages from '@/components/Messages';
-import ChatInput from '@/components/ChatInput';
+import { notFound } from 'next/navigation';
+
+// The following generateMetadata functiion was written after the video and is purely optional
+export async function generateMetadata({ params }: { params: { chatId: string } }) {
+  const session = await getServerSession(authOptions);
+  if (!session) notFound();
+  const [userId1, userId2] = params.chatId.split('--');
+  const { user } = session;
+
+  const chatPartnerId = user.id === userId1 ? userId2 : userId1;
+  const chatPartnerRaw = (await fetchRedis('get', `user:${chatPartnerId}`)) as string;
+  const chatPartner = JSON.parse(chatPartnerRaw) as User;
+
+  return { title: `FriendZone | ${chatPartner.name} chat` };
+}
+
+interface PageProps {
+  params: {
+    chatId: string;
+  };
+}
 
 async function getChatMessages(chatId: string) {
   try {
@@ -26,25 +43,23 @@ async function getChatMessages(chatId: string) {
   }
 }
 
-const Page = async ({ params }: any) => {
+const page = async ({ params }: PageProps) => {
   const { chatId } = params;
-  const session = await getServerSession(handler);
-
-  if (!session) {
-    notFound();
-  }
+  const session = await getServerSession(authOptions);
+  if (!session) notFound();
 
   const { user } = session;
 
   const [userId1, userId2] = chatId.split('--');
 
-  if (userId1 !== user.id && userId2 !== user.id) {
+  if (user.id !== userId1 && user.id !== userId2) {
     notFound();
   }
 
-  const chatPartnerId = userId1 === user.id ? userId2 : userId1;
+  const chatPartnerId = user.id === userId1 ? userId2 : userId1;
+  // new
 
-  const chatPartnerRaw = (await fetchRedis('get', `user${chatPartnerId}`)) as string;
+  const chatPartnerRaw = (await fetchRedis('get', `user:${chatPartnerId}`)) as string;
   const chatPartner = JSON.parse(chatPartnerRaw) as User;
   const initialMessages = await getChatMessages(chatId);
 
@@ -53,20 +68,25 @@ const Page = async ({ params }: any) => {
       <div className="flex sm:items-center justify-between py-3 border-b-2 border-gray-200">
         <div className="relative flex items-center space-x-4">
           <div className="relative">
-            <div className="relative w-8 h-8 sm:w-12 sm:h-12">
+            <div className="relative w-8 sm:w-12 h-8 sm:h-12">
               <Image
                 fill
                 referrerPolicy="no-referrer"
-                src={chatPartner.image || ''}
+                src={
+                  chatPartner.image ||
+                  'https://avatars.githubusercontent.com/u/153955933?v=4&size=64'
+                }
                 alt={`${chatPartner.name} profile picture`}
-                className="rounded-full object-cover"
+                className="rounded-full"
               />
             </div>
           </div>
+
           <div className="flex flex-col leading-tight">
             <div className="text-xl flex items-center">
               <span className="text-gray-700 mr-3 font-semibold">{chatPartner.name}</span>
             </div>
+
             <span className="text-sm text-gray-600">{chatPartner.email}</span>
           </div>
         </div>
@@ -74,14 +94,14 @@ const Page = async ({ params }: any) => {
 
       <Messages
         chatId={chatId}
-        initialMessages={initialMessages}
-        sessionId={session.user.id}
         chatPartner={chatPartner}
         sessionImg={session.user.image}
+        sessionId={session.user.id}
+        initialMessages={initialMessages}
       />
-      <ChatInput chatPartner={chatPartner} chatId={chatId} />
+      <ChatInput chatId={chatId} chatPartner={chatPartner} />
     </div>
   );
 };
 
-export default Page;
+export default page;

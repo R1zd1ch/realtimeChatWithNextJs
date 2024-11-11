@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getFriendsByUserId } from '@/helpers/get-friends-by-user-id';
 import { fetchRedis } from '@/helpers/redis';
 import { handler } from '@/lib/auth';
@@ -28,7 +29,7 @@ const Dashboard: FC = async ({}) => {
         -1,
         -1,
       )) as string[];
-      const lastMessage = JSON.parse(lastMessageRaw) as Message;
+      const lastMessage = lastMessageRaw ? (JSON.parse(lastMessageRaw) as Message) : ([] as any);
       return {
         ...friend,
         lastMessage,
