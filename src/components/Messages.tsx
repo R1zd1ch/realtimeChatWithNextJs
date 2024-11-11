@@ -39,7 +39,7 @@ const Messages: FC<MessagesProps> = ({
       pusherClient.unsubscribe(toPusherKey(`chat:${chatId}`));
       pusherClient.unbind('incoming-message', messageHandler);
     };
-  }, [chatId]);
+  }, []);
 
   return (
     <div
