@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { FC, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import UnseenChatToast from './UnseenChatToast';
+import Link from 'next/link';
 
 interface SidebarChatListProps {
   friends: User[];
@@ -82,7 +83,7 @@ const SidebarChatList: FC<SidebarChatListProps> = ({ friends, sessionId }) => {
 
         return (
           <li key={friend.id}>
-            <a
+            <Link
               href={`/dashboard/chat/${chatHrefConstructor(sessionId, friend.id)}`}
               className="text-gray-700 hover:text-indigo-600 hover:bg-gray-50 group flex items-center gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold"
             >
@@ -92,7 +93,7 @@ const SidebarChatList: FC<SidebarChatListProps> = ({ friends, sessionId }) => {
                   {unseenMessagesCount}
                 </div>
               ) : null}
-            </a>
+            </Link>
           </li>
         );
       })}
